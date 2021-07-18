@@ -1,12 +1,11 @@
 import dagre from 'dagre';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
-  FlowElement,
-  Node,
-  addEdge,
-  isNode,
   Connection,
   Edge,
+  FlowElement,
+  isNode,
+  Node,
   Position,
   removeElements,
   useStoreState,
@@ -14,36 +13,27 @@ import ReactFlow, {
 import { AudioContext } from 'standardized-audio-context';
 
 import { BasicAudioNode } from '../components/nodes/BasicAudioNode';
+import { mapNodesToUINodes } from './ReactFlowAdapter';
 import { Container } from './styled-components';
 import {
+  ChunkEdge,
+  ChunkElement,
   SoundChunkDependencies,
   SoundChunkProps,
   SoundChunkWithDependencies,
 } from './types';
 
-export enum ChunkNodeRole {
-  SOURCE = 'source',
-  MODIFIER = 'modifier',
-  DESTINATION = 'destination',
-}
-
-export interface ChunkNode {
-  id: string;
-  name?: 'string';
-  type: ChunkNodeRole;
-  inputs: string[]; // TODO: strongerize these
-  outputs: string[];
-}
-
-export enum ChunkEdgeRole {
-  EDGE = 'edge',
-}
-
-export interface ChunkEdge {
-  type: ChunkEdgeRole;
-  source: ChunkNode['id'];
-  destination: ChunkNode['id'];
-}
+// This doesn't seem to really be a service, does it?
+// It's a view, which takes a set nodes with its own SoundChunk interface
+//   - how is it going to interface with sound/video?
+//   - what should its boundaries be? view stuff, to be a desired interface to the gui only?
+//   - a combo of view, media interfaces to be used with its nodes?
+//   - maybe it should take a graph viewer dependency
+//         - this dependency could be an adapater-interface/wrapper around a graph gui, like react-flow...
+//         - if so, should that adapted graph library also include methods for layout in its interface?
+//    - how to self contain it — a SoundChunk node should be able to receive a SoundChunk, but...
+//        should a node that is a SoundChunk have some sort of peer dependency? ... prob no,
+//        so need to keep in mind any leaking dependencies/expectations about what each sound chunk is working with... web audio api, video api, whatever
 
 // :begin: extract layout stuff
 
@@ -92,44 +82,6 @@ const getLayoutedElements = (elements: FlowElement[], direction = 'TB') => {
 };
 
 // :end: extract layout stuff
-
-type ChunkNodeOrEdge<T extends ChunkNode | ChunkEdge> = T extends ChunkNode
-  ? ChunkNode
-  : ChunkEdge;
-
-// TODO: This UINode should implement the desired interface; right now it implements ReactFlow's node interface
-function mapSingleNodeToUINode(
-  node: ChunkNode | ChunkEdge,
-  index: number
-): FlowElement {
-  const type =
-    node.type === ChunkNodeRole.SOURCE || ChunkNodeRole.MODIFIER
-      ? 'basic'
-      : 'basic';
-
-  let uiNode: FlowElement;
-
-  if (node.type === ChunkEdgeRole.EDGE) {
-    uiNode = {
-      id: `e${node.source}-${node.destination}`,
-      source: node.source,
-      target: node.destination,
-      animated: true,
-    };
-  } else {
-    uiNode = {
-      id: index.toString(),
-      data: { label: `${node.inputs.length} inputs`, text: index },
-      type,
-      position: { x: 50 * index, y: 50 },
-    };
-  }
-
-  return uiNode;
-}
-
-const mapNodesToUINodes = (nodes: Array<ChunkNode | ChunkEdge>) =>
-  nodes.map(mapSingleNodeToUINode);
 
 // # begin audio utils
 
@@ -238,9 +190,7 @@ const defaultDependencies = {
   },
 };
 
-export type SendEdgeUpdate = (
-  edges: ChunkEdge[]
-) => ChunkNodeOrEdge<ChunkEdge>[];
+export type SendEdgeUpdate = (edges: ChunkEdge[]) => ChunkElement<ChunkEdge>[];
 
 export function createSoundChunk(
   dependencies: Partial<SoundChunkDependencies>

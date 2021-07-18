@@ -5,14 +5,11 @@ import { ThemeProvider } from 'styled-components';
 import './App.css';
 import { Body } from './components/Body';
 import {
-  ChunkEdge,
-  ChunkEdgeRole,
-  ChunkNode,
-  ChunkNodeRole,
   createSoundChunk,
   SendEdgeUpdate,
 } from './services/SoundChunk';
 import { theme } from './theme';
+import {ChunkEdge, ChunkEdgeRole, ChunkNode, ChunkNodeRole} from "./services/types";
 
 const node1: ChunkNode = {
   id: '1',
