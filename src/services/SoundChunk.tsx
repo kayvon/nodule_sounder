@@ -1,5 +1,6 @@
 import dagre from 'dagre';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { Dispatch, FC, useCallback, useEffect, useState } from 'react';
+import { SetStateAction } from 'react';
 import ReactFlow, {
   Connection,
   Edge,
@@ -17,7 +18,7 @@ import { mapNodesToUINodes } from './ReactFlowAdapter';
 import { Container } from './styled-components';
 import {
   ChunkEdge,
-  ChunkElement,
+  ChunkElements,
   SoundChunkDependencies,
   SoundChunkProps,
   SoundChunkWithDependencies,
@@ -131,7 +132,9 @@ const SoundChunk = ({
     };
   });
 
-  const [elements, setElements] = useState(mapNodesToUINodes(nodes));
+  const [elements, setElements] = useState<FlowElement[]>(
+    mapNodesToUINodes(nodes)
+  );
 
   const onConnect = (params: Edge<unknown> | Connection) => {
     sendEdgeUpdate(params as unknown as ChunkEdge[]);
@@ -141,7 +144,7 @@ const SoundChunk = ({
   };
 
   const onElementsRemove = (elementsToRemove: FlowElement[]) => {
-    console.log(elementsToRemove);
+    console.log('remove', elementsToRemove);
     setElements((els) => removeElements(elementsToRemove, els));
   };
 
@@ -190,7 +193,7 @@ const defaultDependencies = {
   },
 };
 
-export type SendEdgeUpdate = (edges: ChunkEdge[]) => ChunkElement<ChunkEdge>[];
+export type SendEdgeUpdate = (edges: ChunkEdge[]) => ChunkEdge[];
 
 export function createSoundChunk(
   dependencies: Partial<SoundChunkDependencies>

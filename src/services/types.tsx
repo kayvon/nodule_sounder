@@ -3,7 +3,7 @@ import { AudioContext } from 'standardized-audio-context';
 import { SendEdgeUpdate } from './SoundChunk';
 
 export type SoundChunkWithDependencies = {
-  nodes: Array<ChunkNode | ChunkEdge>;
+  nodes: ChunkElements;
 } & SoundChunkDependencies;
 
 export type SoundChunkDependencies = {
@@ -21,9 +21,9 @@ export enum ChunkEdgeRole {
 }
 
 export enum ChunkNodeRole {
-  SOURCE = 'source',
+  GENERATOR = 'generator',
   MODIFIER = 'modifier',
-  DESTINATION = 'destination',
+  OUTPUT = 'output',
 }
 
 export interface ChunkNode {
@@ -35,9 +35,14 @@ export interface ChunkNode {
 }
 
 export interface ChunkEdge {
-  type: ChunkEdgeRole;
+  roles: ChunkEdgeRole[];
   source: ChunkNode['id'];
   destination: ChunkNode['id'];
+}
+
+export enum ConnectionRole {
+  SOURCE = 'source',
+  DESTINATION = 'destination',
 }
 
 export type Connection = {
@@ -57,6 +62,7 @@ export interface ChunkNodeType {
   name: ChunkNodeTypes;
 }
 
-export type ChunkElement<T extends ChunkNode | ChunkEdge> = T extends ChunkNode
-  ? ChunkNode
-  : ChunkEdge;
+export interface ChunkElements {
+  nodes: ChunkNode[];
+  edges: ChunkEdge[];
+}
